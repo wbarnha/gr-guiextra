@@ -33,7 +33,7 @@ import pmt
 
 class LabeledLEDIndicator(QFrame):
     # Positions: 1 = above, 2=below, 3=left, 4=right
-    def __init__(self, lbl='', onColor='green', offColor='red', initialState=False, maxSize=80, position=1, alignment=1, valignment=1, parent=None):
+    def __init__(self, lbl='', onColor='green', offColor='red', initialState=False, sat = 0, maxSize=80, position=1, alignment=1, valignment=1, parent=None):
         QFrame.__init__(self, parent)
         self.numberControl = LEDIndicator(onColor, offColor, initialState, maxSize, parent)
         
@@ -186,33 +186,40 @@ class LEDIndicator(QFrame):
         painter.drawEllipse(centerpoint,radius,radius)
 
 class GrLEDIndicator(gr.sync_block, LabeledLEDIndicator):
-    def __init__(self, lbl='', onColor='green', offColor='red', initialState=False, maxSize=80, position=1, alignment=1, valignment=1, parent=None):
+    def __init__(self, lbl='', onColor='green', offColor='red', initialState=False, sat = 0, maxSize=80, position=1, alignment=1, valignment=1, parent=None):
         gr.sync_block.__init__(self, name = "LEDIndicator", in_sig = None, out_sig = None)
-        LabeledLEDIndicator.__init__(self, lbl, onColor, offColor, initialState, maxSize, position, alignment, valignment, parent)
+        LabeledLEDIndicator.__init__(self, lbl, onColor, offColor, initialState, sat, maxSize, position, alignment, valignment, parent)
         self.lbl = lbl
-        
+        self.sat = sat 
         self.message_port_register_in(pmt.intern("state"))
         self.set_msg_handler(pmt.intern("state"), self.msgHandler)   
 
 
     def msgHandler(self, msg):
-        try:    
-            newVal = pmt.to_python(pmt.cdr(msg))
+        #try:    
+        newVal = pmt.to_python(msg)
 
-            if type(newVal) == bool or type(newVal) == int:
-                if type(newVal) == bool:
-                    super().setState(newVal)
-                else:
-                    if newVal == 1:
-                        super().setState(True)
-                    else:
-                        super().setState(False)
+        # If you're reading this, you are looking at the work of an exhausted man completing
+        # his capstone project.
+        #if type(newVal) == bool or type(newVal) == int:
+        if type(newVal) == bool:
+            super().setState(newVal)
+        else:
+            if int((self.sat == 0 and float(newVal) >= 12.08568) or (self.sat == 1 and float(newVal) >= 0.387204) or (self.sat == 2 and float(newVal) >= 0.280505) or (self.sat == 3 or self.sat == 4 or self.sat == 5 and float(newVal) >= 0.44457)) == 1:
+                super().setState(True)
             else:
-                print("[LEDIndicator] Error: Value received was not an int or a bool: %s" % str(e))
-                
-        except Exception as e:
-            print("[LEDIndicator] Error with message conversion: %s" % str(e))
+                super().setState(False)
+        #else:
+        #    print("[LEDIndicator] Error: Value received was not an int or a bool: %s" % str(e))
+            
+        #except Exception as e:
+        #    print("[LEDIndicator] Error with message conversion: %s" % str(e))
 
     def setState(self,onOff):
         super().setState(onOff)
+    
+    def newsat(self,sat):
+        #super().newsat(sat)
+        self.sat = sat
+        super().update()
         

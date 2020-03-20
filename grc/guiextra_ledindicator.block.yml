@@ -18,6 +18,10 @@ parameters:
 -   id: state
     label: State
     default: 'False'
+-   id: sat
+    label: Satellite
+    dtype: int
+    default: '0'
 -   id: onColor
     label: On Color
     dtype: enum
@@ -67,11 +71,12 @@ templates:
         <%
             win = 'self._%s_win'%id
         %>\
-        ${win} = guiextra.GrLEDIndicator(${label}, "${onColor}", "${offColor}", ${state}, ${maxSize}, ${position}, ${cellalignment}, ${verticalalignment}, self)
+        ${win} = guiextra.GrLEDIndicator(${label}, "${onColor}", "${offColor}", ${state}, ${sat}, ${maxSize}, ${position}, ${cellalignment}, ${verticalalignment}, self)
         self.${id} = ${win}
         ${gui_hint() % win}
     callbacks:
     - setState(${state})
+    - newsat(${sat})
 
 documentation: |-
     This block makes a basic LED indicator
